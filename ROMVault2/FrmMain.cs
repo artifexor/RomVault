@@ -8,7 +8,6 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Globalization;
 using System.Windows.Forms;
-using ROMVault2.Properties;
 using ROMVault2.RvDB;
 using ROMVault2.Utils;
 using ROMVault2.SupportedFiles;
@@ -124,15 +123,24 @@ namespace ROMVault2
 
             mnuMakeDat = new MenuItem
             {
-                Text = @"Make Dat",
+                Text = @"Make Dat with CHDs as disk",
+                Tag = null
+            };
+
+
+            mnuMakeDat2 = new MenuItem
+            {
+                Text = @"Make Dat with CHDs as rom",
                 Tag = null
             };
 
             mnuContext.MenuItems.Add(mnuFile);
             mnuContext.MenuItems.Add(mnuMakeDat);
+            mnuContext.MenuItems.Add(mnuMakeDat2);
 
             mnuFile.Click += MnuFileClick;
             mnuMakeDat.Click += MnuMakeDatClick;
+            mnuMakeDat2.Click += MnuMakeDat2Click;
 
             DirTree.ContextMenu = mnuContext;
         }
@@ -435,6 +443,7 @@ namespace ROMVault2
         private ContextMenu mnuContext;
         private MenuItem mnuFile;
         private MenuItem mnuMakeDat;
+        private MenuItem mnuMakeDat2;
 
         private void DirTreeRvSelected(object sender, MouseEventArgs e)
         {
@@ -450,6 +459,7 @@ namespace ROMVault2
 
             mnuFile.Tag = tn.TreeFullName;
             mnuMakeDat.Tag = tn;
+            mnuMakeDat2.Tag = tn;
         }
 
         #region "DAT display code"
@@ -505,6 +515,15 @@ namespace ROMVault2
             DatMaker.MakeDatFromDir(thisDir);
         }
 
+        private void MnuMakeDat2Click(object sender, EventArgs e)
+        {
+            MenuItem mi = (MenuItem)sender;
+            if (mi.Tag == null)
+                return;
+            RvDir thisDir = (RvDir)mi.Tag;
+            DatMaker.MakeDatFromDir(thisDir, false);
+        }
+        
         private void splitContainer3_Panel1_Resize(object sender, EventArgs e)
         {
             // fixes a rendering issue in mono
@@ -1474,13 +1493,11 @@ namespace ROMVault2
             fcfg.Dispose();
         }
 
-        private void BtnReportClick(object sender, EventArgs e)
+        private void btnReport_MouseUp(object sender, MouseEventArgs e)
         {
-            Report.MakeFixFiles();
-            //FrmReport newreporter = new FrmReport();
-            //newreporter.ShowDialog();
-            //newreporter.Dispose();
+            Report.MakeFixFiles(e.Button == MouseButtons.Left);
         }
+
         private void fixDatReportToolStripMenuItem_Click(object sender, EventArgs e)
         {
             Report.MakeFixFiles();
@@ -1560,6 +1577,28 @@ namespace ROMVault2
                 }
             }
         }
-        
+
+        // Override the default "string" sort of the values in the 'Size' column of the RomGrid
+        private void RomGrid_SortCompare(object sender, DataGridViewSortCompareEventArgs e)
+        {
+            try // to sort by 'Size', then by 'Name'.
+            {
+                if (e.Column.Index == 2)
+                {
+                    // compare only the value found before the first space character in each CellValue (excludes " (DHV)", etc..)
+                    e.SortResult = int.Parse(e.CellValue1.ToString().Split(' ')[0]).CompareTo(int.Parse(e.CellValue2.ToString().Split(' ')[0]));
+                    if (e.SortResult == 0) // when sizes are the same, sort by the name in column 1
+                    {
+                        e.SortResult = System.String.Compare(
+                                       RomGrid.Rows[e.RowIndex1].Cells[1].Value.ToString(),
+                                       RomGrid.Rows[e.RowIndex2].Cells[1].Value.ToString());
+                    }
+                    e.Handled = true; // bypass the default string sort
+                }
+            }
+            catch
+            {
+            }
+        }
     }
 }

@@ -97,7 +97,7 @@ namespace ROMVault2.SupportedFiles.Files
                 return 0x17; // need to remember what this number is for
             }
 
-            if (!lbuffer.errorState)
+            if (lbuffer.errorState)
             {
                 ds?.Close();
                 lbuffer?.Dispose();

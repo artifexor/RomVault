@@ -165,7 +165,8 @@
             this.btnReport.Text = "Generate Reports";
             this.btnReport.TextAlign = System.Drawing.ContentAlignment.BottomCenter;
             this.btnReport.UseVisualStyleBackColor = true;
-            this.btnReport.Click += new System.EventHandler(this.BtnReportClick);
+            this.btnReport.MouseUp += new System.Windows.Forms.MouseEventHandler(this.btnReport_MouseUp);
+
             // 
             // btnFixFiles
             // 
@@ -653,10 +654,10 @@
             this.GameGrid.Size = new System.Drawing.Size(697, 267);
             this.GameGrid.TabIndex = 4;
             this.GameGrid.CellFormatting += new System.Windows.Forms.DataGridViewCellFormattingEventHandler(this.GameGrid_CellFormatting);
+            this.GameGrid.ColumnHeaderMouseClick += new System.Windows.Forms.DataGridViewCellMouseEventHandler(this.GameGridColumnHeaderMouseClick);
             this.GameGrid.SelectionChanged += new System.EventHandler(this.GameGridSelectionChanged);
             this.GameGrid.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.GameGridMouseDoubleClick);
             this.GameGrid.MouseUp += new System.Windows.Forms.MouseEventHandler(this.GameGrid_MouseUp);
-            this.GameGrid.ColumnHeaderMouseClick += new System.Windows.Forms.DataGridViewCellMouseEventHandler(this.GameGridColumnHeaderMouseClick);
             // 
             // Type
             // 
@@ -665,7 +666,6 @@
             this.Type.Name = "Type";
             this.Type.ReadOnly = true;
             this.Type.Resizable = System.Windows.Forms.DataGridViewTriState.True;
-            this.Type.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
             this.Type.Width = 40;
             // 
             // CGame
@@ -690,7 +690,6 @@
             this.CCorrect.Name = "CCorrect";
             this.CCorrect.ReadOnly = true;
             this.CCorrect.Resizable = System.Windows.Forms.DataGridViewTriState.False;
-            this.CCorrect.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
             this.CCorrect.Width = 500;
             // 
             // RomGrid
@@ -751,6 +750,7 @@
             this.RomGrid.TabIndex = 21;
             this.RomGrid.CellFormatting += new System.Windows.Forms.DataGridViewCellFormattingEventHandler(this.RomGrid_CellFormatting);
             this.RomGrid.SelectionChanged += new System.EventHandler(this.RomGridSelectionChanged);
+            this.RomGrid.SortCompare += new System.Windows.Forms.DataGridViewSortCompareEventHandler(this.RomGrid_SortCompare);
             this.RomGrid.MouseUp += new System.Windows.Forms.MouseEventHandler(this.RomGridMouseUp);
             // 
             // CGot
@@ -760,7 +760,6 @@
             this.CGot.Name = "CGot";
             this.CGot.ReadOnly = true;
             this.CGot.Resizable = System.Windows.Forms.DataGridViewTriState.True;
-            this.CGot.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
             this.CGot.Width = 65;
             // 
             // CRom
@@ -842,7 +841,7 @@
             // tsmUpdateDATs
             // 
             this.tsmUpdateDATs.Name = "tsmUpdateDATs";
-            this.tsmUpdateDATs.Size = new System.Drawing.Size(88, 20);
+            this.tsmUpdateDATs.Size = new System.Drawing.Size(86, 20);
             this.tsmUpdateDATs.Text = "Update DATs";
             this.tsmUpdateDATs.Click += new System.EventHandler(this.TsmUpdateDaTsClick);
             // 
@@ -940,7 +939,7 @@
             // aboutRomVaultToolStripMenuItem
             // 
             this.aboutRomVaultToolStripMenuItem.Name = "aboutRomVaultToolStripMenuItem";
-            this.aboutRomVaultToolStripMenuItem.Size = new System.Drawing.Size(162, 22);
+            this.aboutRomVaultToolStripMenuItem.Size = new System.Drawing.Size(161, 22);
             this.aboutRomVaultToolStripMenuItem.Text = "About RomVault";
             this.aboutRomVaultToolStripMenuItem.Click += new System.EventHandler(this.AboutRomVaultToolStripMenuItemClick);
             // 

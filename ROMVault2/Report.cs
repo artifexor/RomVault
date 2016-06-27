@@ -18,6 +18,9 @@ namespace ROMVault2
         private static StreamWriter _ts;
         private static RvDat _tDat;
         private static string _outdir;
+        private static string _dfn;
+        private static int _rpy; // count of red plus yellow items per fixdat file
+        private static int _ro; // count of red items only per fixdat file
 
         private static string Etxt(string e)
         {
@@ -31,7 +34,64 @@ namespace ROMVault2
             return ret;
         }
 
-        public static void MakeFixFiles()
+        // check report, remove games without either rom or disk content, delete reports without any game content
+        public static void scrub()
+        {
+            if (_ro < _rpy) // don't bother unless there is a difference
+            { 
+            System.Collections.Generic.List<string> res = new System.Collections.Generic.List<string>();
+            System.Collections.Generic.List<string> game = new System.Collections.Generic.List<string>();
+            int gameCount = 0, itemCount = 0;
+            bool inHeader = true;
+            foreach (string line in File.ReadAllLines(_dfn))
+            {
+                    if (inHeader)
+                    {
+                        res.Add(line);
+                        inHeader = !line.Contains("</header>");
+                        if (!inHeader)
+                        {
+                            int rc = _rpy - _ro;
+                            res.Insert(res.Count - 1, "\t\t<comment>Excludes " + rc.ToString() + " item" + (rc == 0 ? "" : "s") + " that could be fixed</comment>");
+                        }
+                          
+                    }
+                    else
+                    {
+                        if (line.Contains("</datafile>"))
+                        {
+                            res.Add(line);
+                            File.Delete(_dfn);
+                            if (gameCount > 0) File.WriteAllLines(_dfn, res.ToArray());
+                        }
+                        else
+                        {
+                            if (line.Contains("<game "))
+                                game = new System.Collections.Generic.List<string>() { line };
+                            else if (line.Contains("</game>"))
+                            {
+                                if (itemCount > 0)
+                                {
+                                    game.Add(line);
+                                    res.AddRange(game);
+                                    gameCount++;
+                                }
+                                itemCount = 0;
+                            }
+                            else if (line.Contains("<description>"))
+                                game.Add(line);
+                            else if (line.Contains("<rom ") || line.Contains("<disk "))
+                            {
+                                game.Add(line);
+                                itemCount++;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        public static void MakeFixFiles(bool scrubIt = true)
         {
             _tDat = null;
             _ts = null;
@@ -39,8 +99,8 @@ namespace ROMVault2
             FolderBrowserDialog browse = new FolderBrowserDialog
             {
                 ShowNewFolderButton = true,
-                Description = @"Please select a folder for Dats",
-                RootFolder = Environment.SpecialFolder.MyComputer,
+                Description = @"Please select fixdat files destination. NOTE: " + (scrubIt ? @"reports will include Red items only (omitting any Yellow that may be present)" : @"reports will include both Red and Yellow items"),
+                RootFolder = Environment.SpecialFolder.Desktop,
                 SelectedPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"Reports")
             };
 
@@ -48,15 +108,16 @@ namespace ROMVault2
 
             _outdir = browse.SelectedPath;
             _tDat = null;
-            MakeFixFilesRecurse(DB.DirTree.Child(0), true);
+            MakeFixFilesRecurse(DB.DirTree.Child(0), true, scrubIt);
 
             if (_ts == null) return;
 
             _ts.WriteLine("</datafile>");
             _ts.Close();
+            if (scrubIt) scrub();
         }
 
-        private static void MakeFixFilesRecurse(RvBase b, bool selected)
+        private static void MakeFixFilesRecurse(RvBase b, bool selected, bool scrubIt)
         {
             if (selected)
             {
@@ -73,7 +134,11 @@ namespace ROMVault2
                                 _ts.WriteLine();
                             }
 
-                            if (_ts != null) _ts.Close();
+                            if (_ts != null)
+                            {
+                                _ts.Close();
+                                if (scrubIt) scrub();
+                            }
 
                             _tDat = b.Dat;
                             int test = 0;
@@ -84,6 +149,9 @@ namespace ROMVault2
                                 datFilename = Path.Combine(_outdir, "fixDat_" + Path.GetFileNameWithoutExtension(_tDat.GetData(RvDat.DatData.DatFullName)) + "(" + test + ").dat");
                             }
                             _ts = new StreamWriter(datFilename);
+                            _dfn = datFilename;
+                            _rpy = 0;
+                            _ro = 0;
 
                             _ts.WriteLine("<?xml version=\"1.0\"?>");
                             _ts.WriteLine(
@@ -112,11 +180,13 @@ namespace ROMVault2
                     if (tRom != null)
                     {
 
-                        if (tRom.DatStatus == DatStatus.InDatCollect && tRom.GotStatus != GotStatus.Got)
-                        {
+                        if (tRom.DatStatus == DatStatus.InDatCollect && tRom.GotStatus != GotStatus.Got) _rpy++;
+                        if (tRom.DatStatus == DatStatus.InDatCollect && tRom.GotStatus != GotStatus.Got && !(tRom.RepStatus == RepStatus.CanBeFixed || tRom.RepStatus == RepStatus.CorruptCanBeFixed))
+                            {
+                            _ro++;
                             string strRom;
-                            if (tRom.FileStatusIs(FileStatus.SHA1CHDFromDAT | FileStatus.MD5CHDFromDAT))
-                                strRom = "\t\t<disk name=\"" + Etxt(tRom.Name) + "\"";
+                            if (tRom.FileStatusIs(FileStatus.SHA1CHDFromDAT) || tRom.FileStatusIs(FileStatus.MD5CHDFromDAT))
+                                strRom = "\t\t<disk name=\"" + Etxt(Path.GetFileNameWithoutExtension(tRom.Name)) + "\"";
                             else
                                 strRom = "\t\t<rom name=\"" + Etxt(tRom.Name) + "\"";
 
@@ -159,7 +229,7 @@ namespace ROMVault2
                     bool nextSelected = selected;
                     if (d.Tree != null)
                         nextSelected = d.Tree.Checked == RvTreeRow.TreeSelect.Selected;
-                    MakeFixFilesRecurse(d.Child(i), nextSelected);
+                    MakeFixFilesRecurse(d.Child(i), nextSelected, scrubIt);
                 }
             }
 
