@@ -1,0 +1,14 @@
+language: csharp
+solution: ROMVault2.sln
+script: xbuild ROMVault2.sln /target:Build /toolsversion:12.0 /verbosity:normal /p:Configuration=Release
+  /p:TargetFrameworkVersion="v4.5" /p:DebugSymbols=False
+after_failure: ls -LR ROMVault2/obj
+deploy:
+  provider: releases
+  api_key:
+    secure: QdvIZr1Wo04wPM45XCLAqBhBJm0fVuE0pAMeDNEqGlUYKeV3iR/D2Y3GDsoN3B4tRjAlZYB3VEtEUzzcMBlRLjlyo9ATBFCHDfTwEu7liNiM6eop0ju54RPiUGGrjm7CM8SYdoNsnpmE6MidXwKoa8wiNEmFj9JDpyqFjgCDZOt53e5/e0sas17FjosmsG7Ein/L/N23bVLY+9mstwG+rLupaWp0rS1rUm9eyk/acBHhdMD3u+Yrxkl/t/H1NcqYB+/xgjN5LuhAdoFfPEEYrjwJENRqn2CWpbWRolDQJWDmnjCgYErUo2GYp3t9i74fQyQZu1iLOm4pMCLH56u3DrRXLrVYfDp8oMQ/zv86gFwTorbDI1EM956csa7vs9DziZk/UqckjE7EF3nOBunHt95tfmA1cBq03rsbGOq7SvsiAcZwAegwcRgKyslkiAnmwSdXuPqOfNKKPggHL9ZgnodSwz0vCekzWWNkK0M1HsxXZpY8LLNftHxRXpOSxsYpsITg4OGLfJQGXNBYnQkDlq1Q6Z2LgRx+vLxZGr1xqeDgGCkZZjccyhwvQej77oAuqEaiD2O42+/oR1ksRo+9O1Pkb50Q2CXjHO8LM09NcAUxIfTBxKp70GC60JccGsN5JDqHNW+jPUC+ReVZAobHMXPvxecJ2SKSATxTcVANEwE=
+  file_glob: true
+  file: ROMVault2/obj/Release/ROMVault*.exe
+  skip_cleanup: true
+  on:
+    tags: true
